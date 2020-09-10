@@ -1,0 +1,17 @@
+arrow==0.16.0
+cassiopeia==4.0.13
+certifi==2020.6.20
+chardet==3.0.4
+datapipelines==1.0.7
+decorator==4.4.2
+idna==2.10
+merakicommons==1.0.9
+networkx==2.5
+numpy==1.19.1
+pandas==1.1.2
+Pillow==7.2.0
+python-dateutil==2.8.1
+pytz==2020.1
+requests==2.24.0
+six==1.15.0
+urllib3==1.25.10
