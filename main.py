@@ -1,22 +1,34 @@
 import cassiopeia as cass
 from cassiopeia import Summoner, Patch
+import csv
 import json
+import os
 import pandas as pd
 import requests
 
 REGION = "NA"
+SUMMONER = "Traiyn"
 
 def main():
-
     with open('secret.json') as f:
         api_key = json.load(f)['key']
 
     cass.set_riot_api_key(api_key)
-    summoner = cass.get_summoner(name="Traiyn", region=REGION)
+    summoner = cass.get_summoner(name=SUMMONER, region=REGION)
     match_history = Summoner(name=summoner.name, region=REGION).match_history(begin_time=Patch.from_str("9.1", region=REGION).start)
+    champions_played = []
+    for match in match_history:
+        champions_played.append(match.participants[summoner].champion.name)
     # all_champions = cass.Champions(region=REGION)
     # sub_test(api_key)
-    print(match_history)
+    print(champions_played)
+
+    filename = SUMMONER + '_matchhistory.csv'
+    filepath = os.path.join('data', filename)
+
+    with open(filepath, 'w', newline='') as output:
+        wr = csv.writer(output, quoting=csv.QUOTE_ALL)
+        wr.writerow(champions_played)
 
 def sub_test(api_key):
     

@@ -3,6 +3,8 @@ data.txt
 secret.json
 launch.json
 
+data/
+
 ### PYTHON ####
 
 # Byte-compiled / optimized / DLL files
