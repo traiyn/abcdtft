@@ -4,6 +4,7 @@ secret.json
 launch.json
 
 data/
+*.db
 
 ### PYTHON ####
 

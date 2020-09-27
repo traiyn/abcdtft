@@ -7,28 +7,45 @@ import pandas as pd
 import requests
 
 REGION = "NA"
-SUMMONER = "Traiyn"
+# SUMMONER = "PVLeviathan"
 
 def main():
+
+    summoner = input("Please enter a summoner's name: ")
     with open('secret.json') as f:
-        api_key = json.load(f)['key']
+        api_key = json.load(f)['riot-key']
 
     cass.set_riot_api_key(api_key)
-    summoner = cass.get_summoner(name=SUMMONER, region=REGION)
+    summoner = cass.get_summoner(name=summoner, region=REGION)
     match_history = Summoner(name=summoner.name, region=REGION).match_history(begin_time=Patch.from_str("9.1", region=REGION).start)
-    champions_played = []
+    match_info_rows = []
     for match in match_history:
-        champions_played.append(match.participants[summoner].champion.name)
+        match_info = {}
+        match_info['id'] = match.id
+        match_info['queue_id'] = match.queue.id
+        match_info['patch'] = match.patch
+        match_info['creation'] = match.creation
+        match_info['champion'] = match.participants[summoner].champion.name
+        match_info['win'] = match.participants[summoner].team.win
+        match_info['kills'] = match.participants[summoner].stats.kills
+        match_info['deaths'] = match.participants[summoner].stats.deaths
+        match_info['assists'] = match.participants[summoner].stats.assists
+        match_info['kda'] = match.participants[summoner].stats.kda
+        match_info_rows.append(match_info)
+        
+    match_history_df = pd.DataFrame(match_info_rows)
+    match_history_df.set_index('id')
     # all_champions = cass.Champions(region=REGION)
     # sub_test(api_key)
-    print(champions_played)
+    print(match_history_df)
 
-    filename = SUMMONER + '_matchhistory.csv'
+    filename = summoner + '_matchhistory.csv'
     filepath = os.path.join('data', filename)
 
-    with open(filepath, 'w', newline='') as output:
-        wr = csv.writer(output, quoting=csv.QUOTE_ALL)
-        wr.writerow(champions_played)
+    match_history_df.to_csv(filepath)
+    # with open(filepath, 'w', newline='') as output:
+    #     wr = csv.writer(output, quoting=csv.QUOTE_ALL)
+    #     wr.writerow(champions_played)
 
 def sub_test(api_key):
     
