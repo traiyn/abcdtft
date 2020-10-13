@@ -5,47 +5,62 @@ import json
 import os
 import pandas as pd
 import requests
+from api_config import ApiConfig
+import time
 
 REGION = "NA"
-# SUMMONER = "PVLeviathan"
+SUMMONER = "Traiyn"
+RATE_LIMIT = {
+    'per_second': 20,
+    'per_minute': 100
+}
+
+RIOT_API_URL_BASE = "https://na1.api.riotgames.com/"
+RIOT_API_URL_TFT = RIOT_API_URL_BASE + "tft/"
+
+def get_summoner_info():
+    pass
+
 
 def main():
 
-    summoner = input("Please enter a summoner's name: ")
+    # summoner = input("Please enter a summoner's name: ")
     with open('secret.json') as f:
-        api_key = json.load(f)['riot-key']
+        riot_api_key = json.load(f)['riot-key']
 
-    cass.set_riot_api_key(api_key)
-    summoner = cass.get_summoner(name=summoner, region=REGION)
-    match_history = Summoner(name=summoner.name, region=REGION).match_history(begin_time=Patch.from_str("9.1", region=REGION).start)
-    match_info_rows = []
+    riot_api_config = ApiConfig(riot_api_key, RATE_LIMIT)
+
+    riot_api_url_summoner = RIOT_API_URL_TFT + 'summoner/v1/summoners/by-name/' + SUMMONER + '?api_key=' + riot_api_config.api_key
+    resp = requests.get(riot_api_url_summoner)
+    puuid = resp.json()['puuid']
+
+    riot_api_url_tftmatches = "https://americas.api.riotgames.com/tft/match/v1/matches/by-puuid/" + puuid + "/ids?count=1000&api_key=" + riot_api_config.api_key
+    resp = requests.get(riot_api_url_tftmatches)
+    match_history = list(resp.json())
+
+    riot_api_url_tftmatch = "https://americas.api.riotgames.com/tft/match/v1/matches/"
+    existing_matches = os.listdir(os.path.join('data', SUMMONER))
+    counter = 0
+
     for match in match_history:
-        match_info = {}
-        match_info['id'] = match.id
-        match_info['queue_id'] = match.queue.id
-        match_info['patch'] = match.patch
-        match_info['creation'] = match.creation
-        match_info['champion'] = match.participants[summoner].champion.name
-        match_info['win'] = match.participants[summoner].team.win
-        match_info['kills'] = match.participants[summoner].stats.kills
-        match_info['deaths'] = match.participants[summoner].stats.deaths
-        match_info['assists'] = match.participants[summoner].stats.assists
-        match_info['kda'] = match.participants[summoner].stats.kda
-        match_info_rows.append(match_info)
-        
-    match_history_df = pd.DataFrame(match_info_rows)
-    match_history_df.set_index('id')
-    # all_champions = cass.Champions(region=REGION)
-    # sub_test(api_key)
-    print(match_history_df)
-
-    filename = summoner + '_matchhistory.csv'
-    filepath = os.path.join('data', filename)
-
-    match_history_df.to_csv(filepath)
-    # with open(filepath, 'w', newline='') as output:
-    #     wr = csv.writer(output, quoting=csv.QUOTE_ALL)
-    #     wr.writerow(champions_played)
+        match_filename = match + '.json'
+        if match_filename in existing_matches:
+            continue
+        if counter == 99:
+            print('Abiding by API rate limits...')
+            time.sleep(120)
+            print('Continuing')
+            counter = 0
+            
+        request_url = riot_api_url_tftmatch + match + '?api_key=' + riot_api_config.api_key
+        resp = requests.get(request_url)
+        match_info = resp.json()
+        filename = match + '.json'
+        filepath = os.path.join('data', SUMMONER, filename)
+        if not os.path.exists(filepath):
+            with open(filepath, 'w') as f:
+                json.dump(match_info, f)
+        counter += 1
 
 def sub_test(api_key):
     
