@@ -1,6 +1,6 @@
 class ApiConfig(object):
     """
-    Be a good developer and put some wel-formatted info here, please, Taylor.
+    Be a good developer and put some well-formatted info here, please, Taylor.
     """
 
     def __init__(self, api_key, rate_limit):

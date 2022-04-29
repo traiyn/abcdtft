@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import requests
 from api_config import ApiConfig
+import riot_api
 import time
 
 REGION = "NA"
@@ -25,19 +26,13 @@ def get_summoner_info():
 def main():
 
     # summoner = input("Please enter a summoner's name: ")
-    with open('secret.json') as f:
-        riot_api_key = json.load(f)['riot-key']
+
 
     riot_api_config = ApiConfig(riot_api_key, RATE_LIMIT)
+    puuid = riot_api.get_summoner_id(riot_api_config, SUMMONER)
+    match_history = riot_api.get_summoner_match_history(riot_api_config, puuid)
 
-    riot_api_url_summoner = RIOT_API_URL_TFT + 'summoner/v1/summoners/by-name/' + SUMMONER + '?api_key=' + riot_api_config.api_key
-    resp = requests.get(riot_api_url_summoner)
-    puuid = resp.json()['puuid']
-
-    riot_api_url_tftmatches = "https://americas.api.riotgames.com/tft/match/v1/matches/by-puuid/" + puuid + "/ids?count=1000&api_key=" + riot_api_config.api_key
-    resp = requests.get(riot_api_url_tftmatches)
-    match_history = list(resp.json())
-
+    # move below to riot_api_py
     riot_api_url_tftmatch = "https://americas.api.riotgames.com/tft/match/v1/matches/"
     existing_matches = os.listdir(os.path.join('data', SUMMONER))
     counter = 0
@@ -48,7 +43,7 @@ def main():
             continue
         if counter == 99:
             print('Abiding by API rate limits...')
-            time.sleep(120)
+            time.sleep(60) # 100 per minute
             print('Continuing')
             counter = 0
             
